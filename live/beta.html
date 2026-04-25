@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专业导播·数据中控台 - 直播增强版</title>
+    <!-- 使用 Base64 编码的 SVG 作为图标，无需外部文件 -->
+    <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDBhYmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBvbHlnb24gcG9pbnRzPSIyMyA3IDE2IDEyIDIzIDE3IDIzIDciPjwvcG9seWdvbj48cmVjdCB4PSIxIiB5PSI1IiB3aWR0aD0iMTUiIGhlaWdodD0iMTQiIHJ4PSIyIiByeT0iMiI+PC9yZWN0Pjwvc3ZnPg==">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --panel-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --accent-color: #00abff;
+            --accent-hover: #008ecc;
+            --danger-color: #ff4d4d;
+            --success-color: #00c853;
+            --border-color: #333;
+            --font-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 顶部状态栏 */
+        header {
+            height: 50px;
+            background: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+        }
+
+        .brand { font-weight: 700; letter-spacing: 1px; color: var(--accent-color); display: flex; align-items: center; gap: 10px; }
+        .system-clock { font-family: var(--font-mono); font-size: 1.1rem; color: var(--text-muted); }
+        .live-indicator { color: var(--danger-color); font-weight: bold; animation: blink 2s infinite; display: none; }
+
+        /* 主布局 */
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            gap: 1px;
+            background-color: var(--border-color); /* 利用 gap 制造边框效果 */
+        }
+
+        /* 通用面板样式 */
+        .panel {
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        
+        .panel-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            font-weight: 600;
+        }
+
+        /* 左侧：信号源与音频 */
+        .source-list { list-style: none; }
+        .source-item {
+            padding: 10px;
+            background: var(--panel-bg);
+            margin-bottom: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        .source-item:hover { background: #2a2a2a; }
+        .source-item.active { border-left-color: var(--accent-color); background: #252525; }
+
+        .audio-viz-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            margin-top: 20px;
+        }
+        canvas { width: 100%; height: 100%; }
+
+        /* 中间：主监视器 */
+        .monitor-area {
+            position: relative;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .monitor-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            color: var(--success-color);
+            border: 1px solid var(--border-color);
+        }
+
+        /* 右侧：数据与审核 */
+        .metric-card {
+            background: var(--panel-bg);
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .metric-label { color: var(--text-muted); font-size: 0.8rem; }
+        .metric-value { font-family: var(--font-mono); font-size: 1.2rem; font-weight: bold; }
+
+        .audit-queue { list-style: none; }
+        .audit-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        .audit-item:last-child { border-bottom: none; }
+        .status-badge {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            background: #333;
+        }
+
+        /* 底部控制栏 */
+        footer {
+            height: 60px;
+            background: var(--panel-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 15px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px 15px;
+            background: #121212;
+            border: 1px solid var(--border-color);
+            color: white;
+            border-radius: 4px;
+        }
+        input:focus { border-color: var(--accent-color); }
+
+        button {
+            padding: 10px 20px;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        button:hover { background: var(--accent-hover); }
+        button.stop { background: var(--danger-color); }
+
+        @keyframes blink { 50% { opacity: 0.5; } }
+
+        /* 响应式调整 */
+        @media (max-width: 900px) {
+            main { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
+            .monitor-area { min-height: 300px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+            专业导播中控台
+        </div>
+        <div class="system-clock" id="clock">00:00:00</div>
+    </header>
+
+    <main>
+        <!-- 左侧面板：信号源与音频 -->
+        <section class="panel">
+            <div class="panel-title">视频信号源</div>
+            <ul class="source-list" id="sourceList">
+                <!-- 列表由 JS 生成 -->
+            </ul>
+
+            <div class="panel-title" style="margin-top: 20px;">音频分析 (FFT)</div>
+            <div class="audio-viz-container">
+                <canvas id="audioCanvas"></canvas>
+            </div>
+        </section>
+
+        <!-- 中间面板：主监视器 -->
+        <section class="panel monitor-area">
+            <div class="monitor-overlay">
+                <span id="liveStatus" class="live-indicator">● 直播中</span>
+                <span id="streamInfo">等待信号...</span>
+            </div>
+            <video id="mainPlayer" controls playsinline></video>
+        </section>
+
+        <!-- 右侧面板：数据与审核 -->
+        <section class="panel">
+            <div class="panel-title">系统性能监控</div>
+            <div class="metric-card">
+                <span class="metric-label">运行时长</span>
+                <span class="metric-value" id="uptime">00:00:00</span>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">CPU 负载</span>
+                <span class="metric-value" id="cpuLoad">--%</span>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">内存占用</span>
+                <span class="metric-value" id="memUsage">-- MB</span>
+            </div>
+
+            <div class="panel-title" style="margin-top: 20px;">审核队列</div>
+            <ul class="audit-queue" id="auditQueue">
+                <!-- 审核项由 JS 生成 -->
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <input type="text" id="urlInput" placeholder="输入视频流地址 (m3u8/mp4)...">
+        <button id="loadBtn">加载信号</button>
+        <button id="startLiveBtn">开始推流</button>
+        <button id="stopLiveBtn" class="stop">结束</button>
+    </footer>
+
+    <script>
+        /**
+         * 专业导播中控台逻辑脚本
+         * 包含：视频管理、音频可视化、系统监控、审核队列
+         */
+
+        // --- 1. 初始化与全局状态 ---
+        const state = {
+            startTime: Date.now(),
+            isLive: false,
+            currentSource: null,
+            audioContext: null,
+            analyser: null,
+            dataArray: null,
+            canvasCtx: null
+        };
+
+        // DOM 元素缓存
+        const els = {
+            clock: document.getElementById('clock'),
+            uptime: document.getElementById('uptime'),
+            cpu: document.getElementById('cpuLoad'),
+            mem: document.getElementById('memUsage'),
+            player: document.getElementById('mainPlayer'),
+            urlInput: document.getElementById('urlInput'),
+            loadBtn: document.getElementById('loadBtn'),
+            startBtn: document.getElementById('startLiveBtn'),
+            stopBtn: document.getElementById('stopLiveBtn'),
+            canvas: document.getElementById('audioCanvas'),
+            sourceList: document.getElementById('sourceList'),
+            auditQueue: document.getElementById('auditQueue'),
+            liveStatus: document.getElementById('liveStatus'),
+            streamInfo: document.getElementById('streamInfo')
+        };
+
+        // --- 2. 核心功能：时钟与定时器 ---
+        function updateClock() {
+            const now = new Date();
+            els.clock.textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
+        }
+
+        function updateUptime() {
+            const diff = Math.floor((Date.now() - state.startTime) / 1000);
+            const h = Math.floor(diff / 3600).toString().padStart(2, '0');
+            const m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+            const s = (diff % 60).toString().padStart(2, '0');
+            els.uptime.textContent = `${h}:${m}:${s}`;
+        }
+
+        // --- 3. 核心功能：视频源管理 ---
+        const defaultSources = [
+            { name: "测试主信号源 (HLS)", url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" },
+            { name: "备用测试信号 (MP4)", url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" },
+            { name: "宫廷乐氏-司歌 (MP4)", url: "sige.mp4" }
+        ];
+
+        function renderSourceList() {
+            els.sourceList.innerHTML = defaultSources.map((source, index) => `
+                <li class="source-item ${state.currentSource === source.url ? 'active' : ''}" 
+                    onclick="loadSource('${source.url}')">
+                    ${source.name}
+                </li>
+            `).join('');
+        }
+
+        window.loadSource = function(url) {
+            state.currentSource = url;
+            els.player.src = url;
+            els.player.play().catch(e => console.log("等待交互播放", e));
+            els.streamInfo.textContent = `信号源: ${url.substring(url.lastIndexOf('/') + 1)}`;
+            renderSourceList();
+            initAudioContext(); // 尝试初始化音频分析
+        };
+
+        // --- 4. 核心功能：音频频谱可视化 ---
+        function initAudioContext() {
+            if (!state.audioContext) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                state.audioContext = new AudioContext();
+                state.analyser = state.audioContext.createAnalyser();
+                
+                // 连接视频元素到音频分析器
+                // 注意：浏览器安全策略可能需要用户交互后才能播放音频
+                try {
+                    const source = state.audioContext.createMediaElementSource(els.player);
+                    source.connect(state.analyser);
+                    state.analyser.connect(state.audioContext.destination);
+                    state.analyser.fftSize = 256;
+                    
+                    const bufferLength = state.analyser.frequencyBinCount;
+                    state.dataArray = new Uint8Array(bufferLength);
+                    
+                    drawAudioSpectrum();
+                } catch (e) {
+                    console.error("音频上下文初始化失败", e);
+                }
+            }
+        }
+
+        function drawAudioSpectrum() {
+            requestAnimationFrame(drawAudioSpectrum);
+            
+            // 响应式 Canvas
+            const container = els.canvas.parentElement;
+            if (els.canvas.width !== container.clientWidth) {
+                els.canvas.width = container.clientWidth;
+                els.canvas.height = container.clientHeight;
+            }
+
+            const ctx = els.canvas.getContext('2d');
+            const width = els.canvas.width;
+            const height = els.canvas.height;
+
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+
+            if (!state.analyser) return;
+
+            state.analyser.getByteFrequencyData(state.dataArray);
+
+            const barWidth = (width / state.dataArray.length) * 2.5;
+            let barHeight;
+            let x = 0;
+
+            for (let i = 0; i < state.dataArray.length; i++) {
+                barHeight = state.dataArray[i] / 2;
+                
+                // 渐变色
+                const gradient = ctx.createLinearGradient(0, height, 0, height - barHeight);
+                gradient.addColorStop(0, '#00abff');
+                gradient.addColorStop(1, '#00ff88');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(x, height - barHeight, barWidth, barHeight);
+
+                x += barWidth + 1;
+            }
+        }
+
+        // --- 5. 核心功能：性能监控与审核队列 ---
+        async function fetchMetrics() {
+            // 模拟获取性能指标 (实际项目中应使用 performance.memory 或后端 API)
+            // 这里仅作演示，随机生成波动数据
+            const cpu = Math.floor(Math.random() * (40 - 10) + 10);
+            const mem = Math.floor(Math.random() * (500 - 200) + 200);
+            
+            els.cpu.textContent = `${cpu}%`;
+            els.mem.textContent = `${mem} MB`;
+        }
+
+        function renderAuditQueue() {
+            // 模拟审核队列数据
+            const queue = [
+                { id: 101, user: "User_9527", content: "测试弹幕内容...", time: "14:02" },
+                { id: 102, user: "Admin", content: "系统公告：直播即将开始", time: "14:05" },
+            ];
+            
+            els.auditQueue.innerHTML = queue.map(item => `
+                <li class="audit-item">
+                    <span><b>${item.user}</b>: ${item.content}</span>
+                    <span class="status-badge">待审</span>
+                </li>
+            `).join('');
+        }
+
+        // --- 6. 事件监听与生命周期 ---
+        
+        // 窗口大小改变时重绘 Canvas
+        window.addEventListener('resize', () => {
+            // Canvas 内部逻辑已包含 resize 处理，此处可留空或用于其他布局调整
+        });
+
+        // 按钮事件
+        els.loadBtn.addEventListener('click', () => {
+            const url = els.urlInput.value.trim();
+            if (url) loadSource(url);
+        });
+
+        els.urlInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') els.loadBtn.click();
+        });
+
+        els.startBtn.addEventListener('click', () => {
+            state.isLive = true;
+            els.liveStatus.style.display = 'inline-block';
+            els.startBtn.disabled = true;
+            els.startBtn.style.opacity = 0.5;
+        });
+
+        els.stopBtn.addEventListener('click', () => {
+            state.isLive = false;
+            els.liveStatus.style.display = 'none';
+            els.startBtn.disabled = false;
+            els.startBtn.style.opacity = 1;
+            els.player.pause();
+        });
+
+        // 页面加载完成
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. 启动时钟
+            setInterval(updateClock, 1000);
+            updateClock();
+
+            // 2. 启动性能监控 (每5秒)
+            setInterval(fetchMetrics, 5000);
+            fetchMetrics(); // 立即执行一次
+
+            // 3. 启动运行时间计时 (每秒)
+            setInterval(updateUptime, 1000);
+
+            // 4. 初始化列表
+            renderSourceList();
+            renderAuditQueue();
+
+            // 5. 加载默认测试源
+            loadSource(defaultSources[0].url);
+        });
+
+        // 页面卸载时清理资源
+        window.addEventListener('beforeunload', () => {
+            if (state.audioContext) {
+                state.audioContext.close();
+            }
+        });
+
+    </script>
+</body>
+</html>
