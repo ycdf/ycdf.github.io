@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 页面标题 -->
     <title>专业导播·数据中控台 - 直播增强版</title>
 	  <!-- 网站图标 -->
 	<!--  <link rel="icon" href="https://choong.net.cn/images/favicon.png" /> -->
@@ -22,61 +23,301 @@
 		<meta property="twitter:site" content="微信公众平台">
 		<meta property="twitter:description" content="e联系@创客乐哥 13025048639 ◎做时间的朋友，我们专注AI、互联网、产品、软硬件、健康与生活、内容创作、个人成长等，共同探索自媒体时代创业者的重生与赋能之路。 新生命，新精彩！我珍惜，我快乐，我感恩！.h">
 
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <style>
-        :root {
-            --bg-dark: #0a0a0a;
-            --panel-bg: #161616;
-            --led-green: #2ecc71;
-            --led-yellow: #f1c40f;
-            --led-red: #e74c3c;
-            --led-blue: #3498db;
-            --text-gray: #888;
+        /* ============ 全局样式 ============ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        body, html { margin: 0; padding: 0; height: 100%; background: var(--bg-dark); color: #fff; font-family: sans-serif; overflow: hidden; }
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a2a6c, #2c3e50);
+            color: #ecf0f1;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
 
-        header { height: 45px; background: #222; display: flex; align-items: center; padding: 0 15px; gap: 15px; border-bottom: 1px solid #333; z-index: 100; }
-        .nav-btn { padding: 4px 12px; background: #333; cursor: pointer; border-radius: 3px; font-size: 13px; border: none; color: #fff; }
-        .nav-btn.active { background: var(--led-blue); font-weight: bold; }
+        /* ============ 容器布局 ============ */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
 
-        .main-container { display: grid; grid-template-columns: 1fr 320px; height: calc(100vh - 45px); padding: 10px; gap: 10px; box-sizing: border-box; }
-        .panel { background: var(--panel-bg); border: 1px solid #2a2a2a; border-radius: 4px; padding: 12px; display: flex; flex-direction: column; overflow: hidden; }
+        /* ============ 页眉区域 ============ */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-        /* 视频区域 */
-        .video-box { flex: 1; background: #000; border-radius: 4px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-        video { width: 100%; height: 100%; object-fit: contain; }
-        .video-logo { position: absolute; top: 15px; left: 15px; width: 80px; opacity: 0.6; pointer-events: none; }
-        .video-badge { position: absolute; top: 15px; right: 15px; padding: 4px 10px; border-radius: 3px; font-size: 12px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); color: #ff4d4d; display: flex; align-items: center; gap: 5px; }
-        .badge-dot { width: 8px; height: 8px; background: #ff4d4d; border-radius: 50%; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
+        .logo-container img {
+            height: 40px;
+            border-radius: 8px;
+        }
 
-        /* 音频电平 */
-        .audio-section { margin-top: 10px; display: flex; gap: 15px; align-items: center; background: #111; padding: 8px; border-radius: 4px; }
-        .meter-track { height: 10px; background: #000; flex: 1; display: flex; gap: 1px; border-radius: 2px; overflow: hidden; }
-        .led-segment { flex: 1; height: 100%; background: #222; }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 18px;
+            font-weight: bold;
+        }
 
-        /* 数据看板与 Iframe 自适应 */
-        #page-data { grid-column: span 2; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: 100px 1fr; gap: 10px; }
-        .stat-card { text-align: center; justify-content: center; }
-        .stat-card h2 { font-size: 24px; margin: 0; font-family: monospace; }
-        .chart-container { grid-column: span 3; }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            background-color: #2ecc71; /* 绿色表示稳定 */
+            border-radius: 50%;
+            box-shadow: 0 0 8px #2ecc71;
+        }
 
-        /* Iframe 容器自适应核心样式 */
-        .iframe-wrapper { grid-column: span 1; position: relative; width: 100%; height: 100%; min-height: 300px; background: #000; border-radius: 4px; overflow: hidden; }
-        .iframe-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+        /* ============ 主内容区 ============ */
+        main {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
 
-        .scroll-box { flex: 1; overflow-y: auto; background: #0c0c0c; padding: 10px; font-size: 12px; line-height: 1.6; }
-        .audit-item { margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px solid #1a1a1a; }
-        .tag { padding: 1px 4px; border-radius: 2px; font-size: 10px; margin-right: 5px; }
-        .tag-warn { background: #e67e22; color: #fff; }
-        .tag-pass { background: #27ae60; color: #fff; }
+        /* ============ 播放器容器 ============ */
+        .player-section {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
 
-        .hidden { display: none !important; }
-        .digital-clock { font-family: monospace; font-size: 18px; color: var(--led-green); }
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* 16:9 宽高比 */
+            background: #000;
+        }
+
+        #live-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* ============ 角标样式 ============ */
+        .corner-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: linear-gradient(to right, #e74c3c, #c0392b);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        /* ============ 控制面板 ============ */
+        .control-panel {
+            padding: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .url-input-group {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            gap: 8px;
+        }
+
+        #video-url-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #3498db;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        #video-url-input:focus {
+            outline: none;
+            border-color: #2980b9;
+        }
+
+        .btn {
+            background: linear-gradient(to right, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: linear-gradient(to right, #2980b9, #1c6ea4);
+            transform: scale(1.05);
+        }
+
+        /* ============ 频谱可视化容器 ============ */
+        .spectrum-container {
+            height: 60px;
+            background: rgba(0, 0, 0, 0.3);
+            margin-top: 16px;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #audio-spectrum {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ============ 侧边栏卡片通用样式 ============ */
+        .sidebar-card {
+            background: rgba(30, 40, 70, 0.7);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-title {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: #3498db;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* ============ 数据指标样式 ============ */
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 8px 0;
+            color: #f1c40f;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: #bdc3c7;
+        }
+
+        /* ============ 审核队列样式 ============ */
+        .audit-queue {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 300px;
+        }
+
+        .audit-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .audit-item.pending {
+            border-left: 4px solid #f39c12;
+        }
+
+        .audit-item.processed {
+            border-left: 4px solid #2ecc71;
+        }
+
+        .audit-status {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .status-pending { background: #f39c12; color: #000; }
+        .status-processed { background: #2ecc71; color: #000; }
+
+        /* ============ 页脚区域 ============ */
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #95a5a6;
+            font-size: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        footer a {
+            color: #3498db;
+            text-decoration: none;
+            margin: 0 8px;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .beta-link {
+            background: #e74c3c;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .beta-link:hover {
+            background: #c0392b;
+        }
+
+        /* ============ 时间显示样式 ============ */
+        #full-time-display {
+            font-size: 16px;
+            color: #bdc3c7;
+            margin-right: 20px;
+        }
         
-        	a:link,
+            a:link,
 			a:visited {
 				text-decoration: none;
 				/*超链接无下划线*/
@@ -103,186 +344,316 @@
     </style>
 </head>
 <body>
-
-    <header>
-        <button class="nav-btn active" id="btn-live" onclick="showPage('live')">导播总览</button>
-        <button class="nav-btn" id="btn-data" onclick="showPage('data')">实时看板</button>
-        <div style="margin-left:auto" id="clock" class="digital-clock">0000-00-00 00:00:00</div>
-    </header>
-
-    <main class="main-container">
-        <section id="page-live" class="panel">
-            <h3 style="margin:10 0 10px 0; color: var(--text-gray);">直播中控台 MASTER PROGRAM OUTPUT</h3>
-            <div class="video-box">
-                <img src="https://go.choong.net/logo.png" class="video-logo">
-                <div class="video-badge"><div class="badge-dot"></div>LIVE</div>
-                <video id="hlsPlayer" autoplay muted loop playsinline></video>
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 页眉：包含Logo、状态、时间和Beta链接 -->
+        <header>
+            <div class="logo-container">
+                <img src="logo.png" alt="Logo">
             </div>
-            <div class="audio-section">
-                <div style="font-size: 10px; color:var(--text-gray);">AUDIO PGM</div>
-                <div style="flex:1">
-                    <div class="meter-track" id="meter-L"></div>
-                    <div style="height:4px"></div>
-                    <div class="meter-track" id="meter-R"></div>
+            <div class="status-indicator">
+            <!-- 实时日期时间显示 -->
+                <span id="full-time-display">--/-- -- --:--:--</span>
+                <span class="status-dot"></span>
+                <span id="live-status">直播中控台 ｜ 导播测试中 ···</span>
                 </div>
-            </div>
-        </section>
+            <a href="beta.html" class="beta-link" target="_blank">[Beta]</a>
+        </header>
 
-        <section id="sidebar-live" class="panel">
-            <h5 style="margin-top:0;">信号调度 (RTMP/HLS)</h5>
-            <input type="text" id="streamUrl" 
-                   value="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" 
-                   style="width:100%; background:#000; color:var(--led-green); border:1px solid #333; padding:8px; margin-bottom:10px; box-sizing:border-box; font-size: 11px;">
-            <button onclick="changeSource()" style="width:100%; background:var(--led-blue); color:#fff; border:none; padding:8px; cursor:pointer;">加载信号</button>
-            
-            <div style="margin-top:20px; flex:1; display:flex; flex-direction:column; overflow:hidden;">
-                <h5 style="margin-bottom:10px;">智能审核队列 (AI Content Audit)</h5>
-                <div class="scroll-box" id="auditBox">
+        <!-- 主内容区 -->
+        <main>
+            <!-- 左侧：视频播放器和控制面板 -->
+            <section class="player-section">
+                <!-- 视频播放容器 -->
+                <div class="video-container">
+                    <video id="live-video" controls autoplay muted></video>
+                    <!-- 动态角标 -->
+                    <div id="corner-badge" class="corner-badge">LIVE</div>
+                </div>
+                <!-- 控制面板 -->
+                <div class="control-panel">
+                    <div class="url-input-group">
+                        <input type="text" id="video-url-input" placeholder="请输入视频流地址 (RTMP/HLS/MP4)">
+                        <button id="load-signal-btn" class="btn">加载信号</button>
                     </div>
-            </div>
-        </section>
+                </div>
+                <!-- 声音频谱可视化 -->
+                <div class="spectrum-container">
+                    <canvas id="audio-spectrum"></canvas>
+                </div>
+            </section>
 
-        <div id="page-data" class="hidden">
-            <div class="panel stat-card"><p style="font-size:12px; color:var(--text-gray);">在线峰值</p><h2 id="val-online" style="color:var(--led-blue);">1,386</h2></div>
-            <div class="panel stat-card"><p style="font-size:12px; color:var(--text-gray);">转化率 (CVR)</p><h2 style="color:var(--led-green);">8.2%</h2></div>
-            <div class="panel stat-card"><p style="font-size:12px; color:var(--text-gray);">推流带宽</p><h2 id="val-kbps" style="color:var(--led-yellow);">9.1 Mbps</h2></div>
-            <div class="panel stat-card"><p style="font-size:12px; color:var(--text-gray);">系统健康度</p><h2 style="color:var(--led-green);">STABLE</h2></div>
+            <!-- 右侧：数据指标和审核队列 -->
+            <aside>
+                <!-- 核心数据指标卡片 -->
+                <section class="sidebar-card">
+                    <h2 class="card-title">核心数据指标</h2>
+                    <div class="metric-grid">
+                        <div class="metric-item">
+                            <div class="metric-label">在线峰值</div>
+                            <div id="online-peak" class="metric-value">1,386</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">转化率 (CVR)</div>
+                            <div id="cvr-rate" class="metric-value">8.2%</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">推流带宽</div>
+                            <div id="bandwidth" class="metric-value">9.1 Mbps</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-label">系统健康度</div>
+                            <div id="system-health" class="metric-value">STABLE</div>
+                        </div>
+                    </div>
+                </section>
 
-            <div class="panel chart-container">
-                <div id="trendChart" style="width: 100%; height: 100%;"></div>
-            </div>
+                <!-- 智能审核队列卡片 -->
+                <section class="sidebar-card">
+                    <h2 class="card-title">智能审核队列 (AI Content Audit)</h2>
+                    <div id="audit-queue-list" class="audit-queue">
+                        <!-- 审核项将通过JS动态生成 -->
+                    </div>
+                </section>
+            </aside>
+        </main>
 
-            <div class="iframe-wrapper">
-               <!-- <iframe src="https://m.baidu.com" id="conversionFrame"></iframe>-->
-               <iframe frameborder="0" src="https://material-vod-tx.vzan.com/live/1725393497/mps/20251211/853d21f5140243069b566a0e6bf2a648/fabc3c936e224d8e976149320dc05d81.m3u8" allowFullScreen="true"></iframe>
-            </div>
-        </div>
-    </main>
-
-		<div class="footer" style="color:#808080;text-decoration:none;"><strong><a target="_blank" href="https://live.vzan.com/education/ob/topic?zbid=1725393497"
-					style="color:#808080;text-decoration:none;" title="网站技术支持 : 乐哥创事记 || choong.net">技术支持</a> :
-				<!-- <a href="https://choong.net" title="虫虫物语 | 乐哥在线 choong.net">
-		  <font color="#86204A"> 瑞联氢乐哥</font> </a>-->
-				<a target="_blank" href="https://choong.net" style="color:#808080;text-decoration:none;"
-					title="网站技术支持 : 乐哥创事记 || choong.net">创客乐哥</a> ©
-				<a href="https://go.choong.net/1949/" style="color:#808080;text-decoration:none;" title="我爱我的祖国">
+        <!-- 页脚 -->
+       <div class="footer" style="color:#808080;text-decoration:none;">
+            <p>
+                <a href="https://live.vzan.com/education/ob/topic?zbid=1725393497" style="color:#808080;text-decoration:none;" target="_blank">技术支持</a>
+                <a href="https://choong.net" style="color:#808080;text-decoration:none;" target="_blank">@创客乐哥</a>               
+                &copy; <a href="https://go.choong.net/1949/" style="color:#808080;text-decoration:none;" title="我爱我的祖国">
 					<script>
 						// <![CDATA[
 						document.write(new Date().getFullYear());
 						// ]]>
 					</script>
 				</a>
-			</strong>
-		</div>
+            </p>
+        </div>
+    </div>
 
+    <!-- 动态脚本 -->
     <script>
-        // --- 1. 信号源逻辑 (默认循环播放) ---
-        let currentHls = null;
-        const video = document.getElementById('hlsPlayer');
+        // ========== 初始化变量 ==========
+        const videoElement = document.getElementById('live-video');
+        const urlInput = document.getElementById('video-url-input');
+        const loadBtn = document.getElementById('load-signal-btn');
+        const badgeElement = document.getElementById('corner-badge');
+        const canvas = document.getElementById('audio-spectrum');
+        const ctx = canvas.getContext('2d');
+        let audioContext, analyser, source, animationId;
 
-        function changeSource() {
-            const url = document.getElementById('streamUrl').value.trim();
-            if (currentHls) { currentHls.destroy(); currentHls = null; }
-            
-            if (url.includes('.m3u8')) {
-                if (Hls.isSupported()) {
-                    currentHls = new Hls({ enableWorker: true, lowLatencyMode: true });
-                    currentHls.loadSource(url);
-                    currentHls.attachMedia(video);
-                    currentHls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-                }
-            } else {
-                video.src = url;
-                video.load();
-            }
+        // 初始播放源 https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8 (使用一个带音频的公开测试视频)
+        const INITIAL_SOURCE = 'sige.mp4';
+
+        // ========== 工具函数 ==========
+        // 更新完整日期时间 (包含星期)
+        function updateFullTime() {
+            const now = new Date();
+            const days = ['日', '一', '二', '三', '四', '五', '六'];
+            const timeString = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} 周${days[now.getDay()]} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+            document.getElementById('full-time-display').textContent = timeString;
         }
 
-        // --- 2. 真实场景审核队列逻辑 ---
-        const auditScenarios = [
-            { tag: "PASS", text: "用户 '导播小赵' 弹幕内容合法", type: "pass" },
-            { tag: "WARN", text: "检测到敏感词过滤：'***'", type: "warn" },
-            { tag: "PASS", text: "画面检测：未发现违规物品", type: "pass" },
-            { tag: "INFO", text: "连麦申请：ID_2948 待处理", type: "pass" },
-            { tag: "RISK", text: "下行节点延迟波动 > 500ms", type: "warn" },
-            { tag: "BLOCK", text: "重复刷屏行为已自动静言", type: "warn" }
+        // 判断视频格式
+        function getVideoType(url) {
+            if (url.includes('.m3u8')) {
+                return 'application/x-mpegURL'; // HLS
+            } else if (url.includes('.mp4')) {
+                return 'video/mp4';
+            }
+            // 默认尝试 MP4
+            return 'video/mp4';
+        }
+
+        // 设置视频源
+        function setVideoSource(url) {
+            const type = getVideoType(url);
+            const isLive = type === 'application/x-mpegURL';
+
+            // 更新角标
+            badgeElement.textContent = isLive ? 'LIVE' : 'REC';
+            badgeElement.style.background = isLive ? 
+                'linear-gradient(to right, #e74c3c, #c0392b)' : 
+                'linear-gradient(to right, #3498db, #2980b9)';
+
+            // 清除之前的音频分析
+            stopAudioAnalysis();
+
+            // 设置新的视频源
+            videoElement.src = url;
+            videoElement.load();
+
+            // 视频开始播放后启动音频分析
+            videoElement.onplay = () => {
+                startAudioAnalysis();
+            };
+        }
+
+        // ========== 音频频谱可视化 ==========
+        function startAudioAnalysis() {
+            // 创建音频上下文
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            source = audioContext.createMediaElementSource(videoElement);
+            
+            // 连接节点
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+            
+            // 配置分析器
+            analyser.fftSize = 256;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            // 调整Canvas大小以匹配容器
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+
+            // 绘制动画
+            function draw() {
+                animationId = requestAnimationFrame(draw);
+                analyser.getByteFrequencyData(dataArray);
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const barWidth = (canvas.width / bufferLength) * 2.5;
+                let barHeight;
+                let x = 0;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    barHeight = dataArray[i] / 2;
+                    // 创建渐变
+                    const gradient = ctx.createLinearGradient(0, canvas.height, 0, canvas.height - barHeight);
+                    gradient.addColorStop(0, '#3498db');
+                    gradient.addColorStop(1, '#2ecc71');
+
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                    x += barWidth + 1;
+                }
+            }
+            draw();
+        }
+
+        function stopAudioAnalysis() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            if (source) {
+                source.disconnect();
+                source = null;
+            }
+            if (analyser) {
+                analyser.disconnect();
+                analyser = null;
+            }
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+            // 清空画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // ========== 模拟智能审核队列 ==========
+        const mockAuditItems = [
+            { id: 1, content: "用户发言: '这个产品太棒了！'", time: "10:23:15", status: "pending" },
+            { id: 2, content: "检测到敏感词: '免费送'", time: "10:22:48", status: "pending" },
+            { id: 3, content: "图像识别: 可疑二维码", time: "10:21:30", status: "pending" },
+            { id: 4, content: "用户发言: '在哪里购买？'", time: "10:20:55", status: "processed" },
+            { id: 5, content: "用户发言: '主播好帅！'", time: "10:19:22", status: "processed" }
         ];
 
-        function updateAuditLog() {
-            const box = document.getElementById('auditBox');
-            const scene = auditScenarios[Math.floor(Math.random() * auditScenarios.length)];
-            const item = document.createElement('div');
-            item.className = 'audit-item';
-            item.innerHTML = `
-                <span style="color:#555">[${new Date().toLocaleTimeString()}]</span>
-                <span class="tag ${scene.type === 'warn' ? 'tag-warn' : 'tag-pass'}">${scene.tag}</span>
-                <span>${scene.text}</span>
-            `;
-            box.prepend(item);
-            if(box.children.length > 25) box.lastChild.remove();
-        }
+        function renderAuditQueue() {
+            const queueList = document.getElementById('audit-queue-list');
+            queueList.innerHTML = '';
 
-        // --- 3. 基础功能 (时钟/导航/音频) ---
-        function showPage(type) {
-            const isLive = type === 'live';
-            document.getElementById('page-live').classList.toggle('hidden', !isLive);
-            document.getElementById('sidebar-live').classList.toggle('hidden', !isLive);
-            document.getElementById('page-data').classList.toggle('hidden', isLive);
-            document.getElementById('btn-live').classList.toggle('active', isLive);
-            document.getElementById('btn-data').classList.toggle('active', !isLive);
-            if(!isLive) setTimeout(() => myChart.resize(), 100);
-        }
-
-        function tick() {
-            const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleString();
-        }
-
-        const LED_COUNT = 30;
-        function initMeters() {
-            ['meter-L', 'meter-R'].forEach(id => {
-                const track = document.getElementById(id);
-                for (let i = 0; i < LED_COUNT; i++) {
-                    const seg = document.createElement('div');
-                    seg.className = 'led-segment';
-                    track.appendChild(seg);
-                }
-            });
-        }
-        function updateMeters() {
-            ['meter-L', 'meter-R'].forEach(id => {
-                const segments = document.getElementById(id).children;
-                const level = Math.floor(Math.random() * LED_COUNT);
-                for (let i = 0; i < LED_COUNT; i++) {
-                    segments[i].style.background = i < level ? (i > 25 ? 'var(--led-red)' : i > 18 ? 'var(--led-yellow)' : 'var(--led-green)') : '#222';
-                }
+            mockAuditItems.forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.className = `audit-item ${item.status}`;
+                itemEl.innerHTML = `
+                    <div>
+                        <div>${item.content}</div>
+                        <div style="font-size: 12px; color: #95a5a6; margin-top: 4px;">${item.time}</div>
+                    </div>
+                    <span class="audit-status status-${item.status}">${item.status === 'pending' ? '待处理' : '已处理'}</span>
+                `;
+                queueList.appendChild(itemEl);
             });
         }
 
-        // --- 4. 图表趋势 ---
-        const myChart = echarts.init(document.getElementById('trendChart'), 'dark');
-        let dataSeries = Array(24).fill(0).map(() => Math.floor(Math.random() * 500 + 1000));
-        myChart.setOption({
-            backgroundColor: 'transparent',
-            title: { text: '24H 并发监控 (Real-time Engagement)', textStyle: { fontSize: 12, color: '#888' } },
-            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-            xAxis: { type: 'category', boundaryGap: false, data: Array(24).fill('') },
-            yAxis: { type: 'value', splitLine: { lineStyle: { color: '#222' } } },
-            series: [{ type: 'line', smooth: true, symbol: 'none', areaStyle: { color: 'rgba(52,152,219,0.1)' }, lineStyle: { width: 1 }, data: dataSeries }]
+        // ========== 模拟动态数据更新 ==========
+        function fetchMetrics() {
+            setTimeout(() => {
+                const mockData = {
+                    onlinePeak: Math.floor(Math.random() * 2000) + 1000,
+                    cvrRate: (Math.random() * 5 + 5).toFixed(1) + '%',
+                    bandwidth: (Math.random() * 5 + 7).toFixed(1) + ' Mbps',
+                    systemHealth: 'STABLE'
+                };
+
+                document.getElementById('online-peak').textContent = mockData.onlinePeak.toLocaleString();
+                document.getElementById('cvr-rate').textContent = mockData.cvrRate;
+                document.getElementById('bandwidth').textContent = mockData.bandwidth;
+                document.getElementById('system-health').textContent = mockData.systemHealth;
+
+                const healthElement = document.getElementById('system-health');
+                healthElement.style.color = mockData.systemHealth === 'STABLE' ? '#2ecc71' : 
+                                          (mockData.systemHealth === 'WARNING' ? '#f39c12' : '#e74c3c');
+            }, 500);
+        }
+
+        // ========== 事件监听与初始化 ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. 设置初始视频源 (带音频的测试视频)
+            urlInput.value = INITIAL_SOURCE;
+            setVideoSource(INITIAL_SOURCE);
+
+            // 2. 加载信号按钮事件
+            loadBtn.addEventListener('click', () => {
+                const newUrl = urlInput.value.trim();
+                if (newUrl) {
+                    setVideoSource(newUrl);
+                } else {
+                    alert('请输入有效的视频地址！');
+                }
+            });
+
+            // 3. 回车键加载
+            urlInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    loadBtn.click();
+                }
+            });
+
+            // 4. 初始化审核队列
+            renderAuditQueue();
+
+            // 5. 启动定时器
+            updateFullTime();
+            fetchMetrics();
+            setInterval(updateFullTime, 1000);
+            setInterval(fetchMetrics, 5000);
+
+            // 6. 处理窗口大小变化，重绘频谱
+            window.addEventListener('resize', () => {
+                if (animationId) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    const container = canvas.parentElement;
+                    canvas.width = container.clientWidth;
+                    canvas.height = container.clientHeight;
+                }
+            });
         });
 
-        // 定时更新
-        window.onload = () => {
-            initMeters();
-            changeSource();
-            setInterval(tick, 1000);
-            setInterval(updateMeters, 100);
-            setInterval(updateAuditLog, 2000);
-            setInterval(() => {
-                dataSeries.shift(); dataSeries.push(dataSeries[dataSeries.length-1] + Math.floor(Math.random()*50-25));
-                myChart.setOption({ series: [{ data: dataSeries }] });
-            }, 3000);
-        };
-        window.onresize = () => myChart.resize();
+        // 页面卸载时清理资源
+        window.addEventListener('beforeunload', () => {
+            stopAudioAnalysis();
+        });
     </script>
 </body>
 </html>
