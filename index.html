@@ -269,6 +269,90 @@
 				vertical-align: text-bottom;
 			}
 		</style>
+		<style>        /* --- APP下载按钮核心样式开始 --- */        
+ /* ====================== 核心：APP下载按钮样式 ====================== */
+ .app-download-btn {
+     /* 按钮为行内块元素，支持宽高设置 */
+     display: inline-flex;
+     /* 垂直居中图标和文字 */
+     align-items: center;
+     /* 水平居中内容 */
+     justify-content: center;
+     /* 按钮宽度 */
+     width: 135px;
+     /* 按钮高度 */
+     height: 35px;
+     /* 渐变背景：蓝紫渐变，视觉更美观 */
+     background: linear-gradient(135deg, #ff0000, #7C3AED);
+     /* 圆角：圆润设计，符合APP按钮风格 */
+     border-radius: 30px;
+     /* 去除默认边框 */
+     border: none;
+     /* 鼠标悬浮为小手样式 */
+     cursor: pointer;
+     /* 文字样式 */
+     color: #ffffff;
+     font-size: 18px;
+     font-weight: 600;
+     font-family: "Microsoft YaHei", sans-serif;
+     /* 文字和图标之间的间距 */
+     gap: 10px;
+     /* 去除点击高亮效果 */
+     outline: none;
+     /* 悬浮过渡动画：平滑效果 */
+     transition: all 0.3s ease;
+     /* 阴影：提升立体感 */
+     box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+     text-decoration: none;
+ }
+ 
+ /* 按钮悬浮效果：变亮+轻微放大 */
+ .app-download-btn:hover {
+     background: linear-gradient(135deg, #ff0000, #8B5CF6);
+     transform: translateY(-3px) scale(1.03);
+     box-shadow: 0 12px 28px rgba(124, 58, 237, 0.4);
+ }
+ 
+ /* 按钮点击效果：按下回弹 */
+ .app-download-btn:active {
+     transform: translateY(0);
+     box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+ }
+ 
+ /* 按钮内图标样式：纯CSS绘制手机图标 */
+ .btn-icon {
+     width: 24px;
+     height: 24px;
+     /* 手机外框 */
+     border: 2px solid #fff;
+     border-radius: 4px;
+     position: relative;
+ }
+ /* 手机顶部听筒 */
+ .btn-icon::before {
+     content: "";
+     position: absolute;
+     width: 8px;
+     height: 2px;
+     background: #fff;
+     top: 4px;
+     left: 50%;
+     transform: translateX(-50%);
+     border-radius: 1px;
+ }
+ /* 手机底部按键 */
+ .btn-icon::after {
+     content: "";
+     position: absolute;
+     width: 6px;
+     height: 6px;
+     border: 2px solid #fff;
+     border-radius: 50%;
+     bottom: 3px;
+     left: 50%;
+     transform: translateX(-50%);
+ }
+		</style>
 
 		<!-- CSS 样式：优化轮播样式 -->
 		<style>
@@ -1228,7 +1312,7 @@
 							<b>全国服务热线 Call Center (+86) :</b>
 						</div>
 						<div class="num">
-							<font color="#CB0202"> 021-5779 3357 </font>				 
+							<font color="#CB0202"> 186 5343 3315 </font>				 
 							<!-- 
 							<font color="#CB0202"> <i>0</i><i>5</i><i>7</i><i>3</i>-<i>8</i><i>3</i><i>3</i><i>8</i><i>8</i><i>8</i><i>9</i><i>9</i> </font>
 						 -->		
@@ -1238,10 +1322,22 @@
 					</div>
 					<div class="g-col-sm-12 footer-info">
 						<img src="images/ycdf-logo.png" width="30%" height="30%" alt="">
-						<a href="https://www.bsan.org.cn/document/CY2024NJJWP6C0HPC.html?ref=client" target="_blank"
+						<!--
+						  按钮结构说明：
+						  这里不需要任何内部的 <i> 或 <span> 标签。
+						  所有的图形都通过 CSS 类名 app-download-bt 及其伪元素生成。
+						-->
+    <!-- APP下载按钮：a标签可直接跳转下载链接 -->
+    <a href="download/down.html" title="乐出东方APP - 数字化平台，分享香文化 | 官网下载" target="_blank" class="app-download-btn">
+        <!-- 纯CSS手机图标 -->
+        <span class="btn-icon"></span>
+        APP下载
+    </a>
+						<!-- <a href="https://www.bsan.org.cn/document/CY2024NJJWP6C0HPC.html?ref=client" target="_blank"
 							title="集团--品牌强国成员单位">
 							<img src="images/PPQG2022-logo.png" width="16%" height="16%" alt="品牌强国">
-						</a>
+						</a> -->
+						
 						<br><br>
 						<b> &nbsp;&nbsp;
 							<img class="bottom" src="footer/footer_zbhh.png" height="20" width="20">
